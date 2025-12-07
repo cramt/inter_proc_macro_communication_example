@@ -1,0 +1,3 @@
+[workspace]
+resolver = "3"
+members = ["proc_macro_b","proc_macro_a", "some_lib"]
