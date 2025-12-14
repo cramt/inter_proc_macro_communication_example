@@ -1,0 +1,12 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+my_framework_macro = { path = "../my_framework_macro" }
+
+[build-dependencies]
+plugin_api = { path = "../plugin_api" }
+my_plugin_hello = { path = "../my_plugin_hello" }
+my_framework_builder = { path = "../my_framework_builder" }

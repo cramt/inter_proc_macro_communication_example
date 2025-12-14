@@ -1,3 +1,10 @@
 [workspace]
 resolver = "3"
-members = ["proc_macro_b","proc_macro_a", "some_lib"]
+
+members = [
+    "plugin_api",
+    "my_plugin_hello",
+    "my_framework_builder",
+    "my_framework_macro",
+    "app",
+]
