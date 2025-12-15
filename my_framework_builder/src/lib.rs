@@ -17,41 +17,68 @@ pub fn prepare_runner_and_emit_env() -> io::Result<()> {
 }
 
 pub fn run_as_runner() -> std::io::Result<()> {
-    use plugin_api::{PluginEntry, inventory};
-    use std::io::{Read, Write};
+    use clap::Parser;
+    use plugin_api::{PluginEntry, PluginService, inventory};
+    use std::sync::Arc;
 
-    let mut input = String::new();
-    std::io::stdin().read_to_string(&mut input)?;
+    #[derive(Parser)]
+    struct Args {
+        #[arg(long)]
+        runner: String,
+        #[arg(long)]
+        socket: String,
+    }
 
-    // argv[1] == "--runner"; argv[2] may be the plugin name to select
-    let target = std::env::args().nth(2);
-    let mut last_err: Option<String> = None;
+    struct Wrapper(Arc<dyn plugin_api::Plugin>);
 
-    for entry in inventory::iter::<PluginEntry> {
-        if let Some(name) = target.as_deref() {
-            if entry.name != name {
-                continue;
-            }
-        }
-        let plugin = (entry.constructor)(); // construct instance
-        match plugin.transform(&input) {
-            Ok(s) => {
-                std::io::stdout().write_all(s.as_bytes())?;
-                return Ok(());
-            }
-            Err(e) => {
-                last_err = Some(e);
-            }
+    impl PluginService for Wrapper {
+        async fn transform(&self, input: String) -> String {
+            self.0.transform(&input).expect("plugin transform failed")
         }
     }
 
-    let msg = if let Some(name) = target {
-        format!("no matching plugin found for '{name}'")
-    } else {
-        "no plugin succeeded".to_string()
-    };
-    let err = last_err
-        .map(|e| format!("{msg}; last error: {e}"))
-        .unwrap_or(msg);
-    Err(std::io::Error::new(std::io::ErrorKind::Other, err))
+    let args = Args::parse();
+    let target = args.runner;
+
+    let mut selected_plugin: Option<Arc<dyn plugin_api::Plugin>> = None;
+
+    for entry in inventory::iter::<PluginEntry> {
+        if entry.name == target {
+            selected_plugin = Some(Arc::from((entry.constructor)()));
+            break;
+        }
+    }
+
+    let plugin = selected_plugin.ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("no matching plugin found for '{target}'"),
+        )
+    })?;
+
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?;
+
+    rt.block_on(async move {
+        // Remove socket if it exists
+        let _ = tokio::fs::remove_file(&args.socket).await;
+
+        let listener = tokio::net::UnixListener::bind(&args.socket)?;
+
+        loop {
+            let (stream, _) = listener.accept().await?;
+            let transport = std::sync::Arc::new(rapace::StreamTransport::new(stream));
+            let service = Wrapper(plugin.clone());
+
+            let _ = plugin_api::PluginServiceServer::new(service)
+                .serve(transport)
+                .await;
+
+            // Exit after serving one request since this is a one-shot runner
+            break;
+        }
+
+        Ok(())
+    })
 }
