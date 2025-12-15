@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-plugin_api = { path = "../plugin_api" }
+menoetius = { path = "../menoetius" }
+rapace = { git = "https://github.com/bearcove/rapace.git", features = ["stream"] }

@@ -4,9 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-my_framework_macro = { path = "../my_framework_macro" }
+menoetius_macro = { path = "../menoetius_macro" }
+my_plugin_hello_macro = { path = "../my_plugin_hello_macro" }
 
 [build-dependencies]
-plugin_api = { path = "../plugin_api" }
+menoetius = { path = "../menoetius" }
 my_plugin_hello = { path = "../my_plugin_hello" }
-my_framework_builder = { path = "../my_framework_builder" }
+menoetius_build = { path = "../menoetius_build" }
+tokio = { version = "1", features = ["rt-multi-thread"] }

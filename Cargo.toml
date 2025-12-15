@@ -2,9 +2,10 @@
 resolver = "3"
 
 members = [
-    "plugin_api",
+    "menoetius",
     "my_plugin_hello",
-    "my_framework_builder",
-    "my_framework_macro",
+    "my_plugin_hello_macro",
+    "menoetius_build",
+    "menoetius_macro",
     "app",
 ]

@@ -4,17 +4,30 @@
 
 ## How it works (short)
 
-1.  **Plugins** implement a `Plugin` trait and register via `inventory::submit!` a **const-friendly entry**:
+1.  **Plugins** define their own trait/shape and register a const-friendly entry using the framework's generic `PluginEntry<T>` type. The framework only provides the inventory collection and process/IPC helpers so the concrete plugin surface area can be chosen by each plugin crate.
+
     ```rust
-    pub struct PluginEntry {
-      pub name: &'static str,
-      pub constructor: fn() -> Box<dyn Plugin>,
+    // In the plugin crate: define the plugin trait the plugin implements.
+    pub trait MyPlugin: Sync + Send + 'static {
+        fn transform(&self, input: &str) -> Result<String, String>;
     }
+
+    // Constructor must be a plain `fn` so it is a compile-time constant.
+    fn make_hello() -> Box<dyn MyPlugin> { Box::new(Hello) }
+
+    // Submit a PluginEntry where the concrete stored type is `Box<dyn MyPlugin>`.
+    // The framework's inventory is generic, so plugin crates submit the appropriate
+    // `PluginEntry::<Box<dyn MyPlugin>>`.
+    menoetius::inventory::submit!(menoetius::PluginEntry::<Box<dyn MyPlugin>> {
+        name: "hello",
+        constructor: make_hello,
+    });
     ```
-    The function pointer is a compile-time constant; at runtime we call it to construct the plugin.
+
+    The function pointer is still a compile-time constant; at runtime the framework iterates the collected `PluginEntry<T>` entries for the expected `T` (for example `Box<dyn MyPlugin>`) and calls the constructors.
 
 2.  **Build script (`app/build.rs`)** links plugin crates as **build-dependencies**, then:
-    *   **Normal mode:** copies its own executable to `OUT_DIR/my_framework_runner` and sets `MY_FRAMEWORK_RUNNER` env var.
+    *   **Normal mode:** copies its own executable to `OUT_DIR/menoetius_runner` and sets `MENOETIUS_RUNNER` env var.
     *   **Runner mode (`--runner`)**: reads tokens from `stdin`, picks a plugin by `name`, runs `transform()`, writes tokens to `stdout`.
 
 3.  **Proc macro** spawns the runner, streams input tokens, receives output tokens, and returns them.
@@ -31,20 +44,21 @@ cargo run -p app
 
 ## Project layout
 
-    plugin_api/            # Plugin trait + PluginEntry + inventory::collect!(PluginEntry)
-    my_plugin_hello/       # Example plugin: submit!(PluginEntry { name: "hello", constructor: make_hello })
-    my_framework_builder/  # prepare_runner_and_emit_env() + run_as_runner()
-    my_framework_macro/    # proc_macro that spawns the runner and returns transformed tokens
-    app/                   # consumer crate: build.rs (dual-mode) + main.rs
+    menoetius/             # Framework: generic `PluginEntry<T>` + inventory collection and runner helpers (no fixed `Plugin` trait)
+    my_plugin_hello/       # Example plugin: defines its own trait `MyPlugin`, implements it and `submit!(PluginEntry::<Box<dyn MyPlugin>>{...})`
+    menoetius_build/       # prepare_runner_and_emit_env() + async `run_build_script_mode::<T>()` / runner helpers
+    menoetius_macro/       # helper library: async `transform_with_runner()` that performs process setup and RPC
+    my_plugin_hello_macro/ # proc-macro crate that invokes the helper with a short-lived Tokio runtime
+    app/                   # consumer crate: build.rs (delegates to menoetius_build) + main.rs
 
 ## Key snippets
 
 **Register a plugin:**
 
 ```rust
-fn make_hello() -> Box<dyn Plugin> { Box::new(Hello) }
+fn make_hello() -> Box<dyn MyPlugin> { Box::new(Hello) }
 
-plugin_api::inventory::submit!(PluginEntry {
+menoetius::inventory::submit!(PluginEntry::<Box<dyn MyPlugin>> {
     name: "hello",
     constructor: make_hello,
 });
@@ -56,32 +70,37 @@ pub fn force_link() {} // called from build.rs so the crate is kept by the linke
 
 ```rust
 fn main() {
-    if std::env::args().any(|a| a == "--runner") {
-        my_plugin_hello::force_link();
-        my_framework_builder::run_as_runner().unwrap();
-        return;
-    }
-    my_plugin_hello::force_link();
-    my_framework_builder::prepare_runner_and_emit_env().unwrap();
+    // Build scripts are synchronous; run the async build-script helper via a short-lived Tokio runtime.
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("failed to create tokio runtime for build script");
+
+    rt.block_on(async {
+        // Call the generic async helper for the plugin trait implemented by the plugin crate.
+        // The plugin crate must export `force_link()` and its trait (here `MyPlugin`).
+        menoetius_build::run_build_script_mode::<Box<dyn my_plugin_hello::MyPlugin>>(my_plugin_hello::force_link).await;
+    });
 }
 ```
 
 **Proc macro (call runner):**
 
 ```rust
-let runner = std::env::var("MY_FRAMEWORK_RUNNER").expect("runner not set");
-let out = std::process::Command::new(&runner)
-    .arg("--runner").arg("hello")
-    .stdin(Stdio::piped()).stdout(Stdio::piped())
-    .spawn()?.wait_with_output()?;
-let tokens = String::from_utf8(out.stdout)?.parse()?;
+// Most users will invoke a plugin-specific proc-macro rather than calling the runner directly.
+// Example (in the consumer crate source):
+hello_plugin!(println!("Hello from plugin!"););
+
+// If you need to call the async helper directly from an async context, use the helper:
+// let result = menoetius_macro::transform_with_runner("hello", input_string).await?;
 ```
 
 ## Add more plugins
 
-*   Create another crate, implement `Plugin`, add a `constructor`, `submit!` with `name: "world"`, and export `pub fn force_link() {}`.
-*   Add it to `app`’s **`[build-dependencies]`** and call `my_plugin_world::force_link()` in `build.rs`.
-*   Pass `"world"` to the runner from the macro to select it.
+*   Create another crate, define the plugin trait you want (for example `MyPlugin`), implement it and provide a `constructor: fn() -> Box<dyn MyPlugin>`.
+*   Submit the entry as `menoetius::inventory::submit!(menoetius::PluginEntry::<Box<dyn MyPlugin>> { name: "world", constructor });`.
+*   Export `pub fn force_link()` in that crate and add the crate to `app`’s **`[build-dependencies]`**. In `build.rs` pass its `force_link` function to `menoetius_build::run_build_script_mode::<Box<dyn your_crate::YourTrait>>(your_crate::force_link).await` (or use a short-lived runtime wrapper if `build.rs` is synchronous).
+*   From proc-macros, call the helper (or a plugin-specific proc-macro) and select the plugin by name (e.g. `hello_plugin!(...)`).
 
 ## Caveats
 

@@ -1,6 +1,6 @@
-use my_framework_macro::my_framework;
+use my_plugin_hello_macro::hello_plugin;
 
-my_framework!(println!("Hello from plugin!"););
+hello_plugin!(println!("Hello from plugin!"););
 
 fn main() {
     hello_plugin();

@@ -1,0 +1,25 @@
+[package]
+name = "my_plugin_hello_macro"
+version = "0.1.0"
+edition = "2024"
+description = "Proc-macro crate that expands to plugin invocation using the menoetius helper library"
+license = "MIT OR Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+# proc-macro helpers
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+# Tokio is needed for the short-lived runtime used by the proc-macro wrapper.
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+
+# Use the library helper that talks to the runner and transforms tokens.
+# This is the library that replaced the original proc-macro implementation.
+menoetius_macro = { path = "../menoetius_macro" }
+
+menoetius = { path = "../menoetius" }
+my_plugin_hello = { path = "../my_plugin_hello" }

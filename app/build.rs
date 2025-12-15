@@ -1,17 +1,20 @@
+use my_plugin_hello::{Hello, MyPluginServer};
+
 fn main() {
-    // If invoked as runner by the proc macro, run in runner mode.
-    if std::env::args().any(|a| a == "--runner") {
-        // Force link plugin crates so their inventory submissions are present.
-        let _ = &my_plugin_hello::force_link();
+    // Build scripts are synchronous; run the async build-script helper via a short-lived Tokio runtime.
+    // We call the generic helper with the plugin trait object type implemented by the plugin crate.
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("failed to create tokio runtime for build script");
 
-        if let Err(e) = my_framework_builder::run_as_runner() {
-            eprintln!("{e}");
-            std::process::exit(1);
-        }
-        return;
-    }
-
-    // Normal build script mode: prepare runner and expose env var
-    let _ = &my_plugin_hello::force_link(); // also force-link in normal mode
-    my_framework_builder::prepare_runner_and_emit_env().unwrap();
+    rt.block_on(async {
+        // Note: the generic type here is the plugin trait implemented by the plugin crate.
+        // This matches how the plugin submitted its inventory entry as PluginEntry::<Box<dyn MyPlugin>>.
+        menoetius_build::run_build_script_mode::<Hello, _, _>(
+            my_plugin_hello::force_link,
+            |plugin, transport| MyPluginServer::new(plugin).serve(transport),
+        )
+        .await;
+    });
 }
