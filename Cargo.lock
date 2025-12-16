@@ -520,7 +520,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "menoetius",
- "rapace",
+ "rapace 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio",
 ]
 
@@ -530,7 +530,7 @@ version = "0.1.0"
 dependencies = [
  "menoetius",
  "miette",
- "rapace",
+ "rapace 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
  "thiserror",
  "tokio",
@@ -580,7 +580,7 @@ name = "my_plugin_hello"
 version = "0.1.0"
 dependencies = [
  "menoetius",
- "rapace",
+ "rapace 0.4.0 (git+https://github.com/bearcove/rapace.git)",
 ]
 
 [[package]]
@@ -699,6 +699,28 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 [[package]]
 name = "rapace"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a932a4b46e790bbc4f80d22710a2e9f285c1c4ba7c2b5c1dc9307992a3baee3"
+dependencies = [
+ "facet",
+ "facet-core",
+ "facet-postcard",
+ "futures",
+ "parking_lot",
+ "rapace-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rapace-macros 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rapace-registry 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rapace-transport-mem 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rapace-transport-shm 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rapace-transport-stream 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio",
+ "tracing",
+ "web-time",
+]
+
+[[package]]
+name = "rapace"
+version = "0.4.0"
 source = "git+https://github.com/bearcove/rapace.git#3a12ec6b91fbac2f3e9643a312a3b2eb000b6c0c"
 dependencies = [
  "facet",
@@ -706,15 +728,31 @@ dependencies = [
  "facet-postcard",
  "futures",
  "parking_lot",
- "rapace-core",
- "rapace-macros",
- "rapace-registry",
- "rapace-transport-mem",
- "rapace-transport-shm",
- "rapace-transport-stream",
+ "rapace-core 0.4.0 (git+https://github.com/bearcove/rapace.git)",
+ "rapace-macros 0.4.0 (git+https://github.com/bearcove/rapace.git)",
+ "rapace-registry 0.4.0 (git+https://github.com/bearcove/rapace.git)",
+ "rapace-transport-mem 0.4.0 (git+https://github.com/bearcove/rapace.git)",
+ "rapace-transport-shm 0.4.0 (git+https://github.com/bearcove/rapace.git)",
+ "rapace-transport-stream 0.4.0 (git+https://github.com/bearcove/rapace.git)",
  "tokio",
  "tracing",
  "web-time",
+]
+
+[[package]]
+name = "rapace-core"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fe98928c698ddef88942584bf5c7ddbf3fbc902d0e044883902ea6f96c4f91d"
+dependencies = [
+ "async-stream",
+ "bitflags",
+ "facet",
+ "futures",
+ "futures-timeout",
+ "parking_lot",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -735,6 +773,19 @@ dependencies = [
 [[package]]
 name = "rapace-macros"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4481bcdd6defaa6a102f9fd1801c772adb27a05101f5ddc8d13a76d73058a545"
+dependencies = [
+ "heck 0.4.1",
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "unsynn",
+]
+
+[[package]]
+name = "rapace-macros"
+version = "0.4.0"
 source = "git+https://github.com/bearcove/rapace.git#3a12ec6b91fbac2f3e9643a312a3b2eb000b6c0c"
 dependencies = [
  "heck 0.4.1",
@@ -742,6 +793,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unsynn",
+]
+
+[[package]]
+name = "rapace-registry"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b58006e68b543502b291fdc752f62fb044ae2a32fd9c1a0fab7251287cd18b4"
+dependencies = [
+ "facet-core",
 ]
 
 [[package]]
@@ -757,11 +817,36 @@ dependencies = [
 [[package]]
 name = "rapace-transport-mem"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d9aafb273d67dfe2acc15e8c4828190dac3d95f988ddfa2593c544e4b9afb38"
+dependencies = [
+ "parking_lot",
+ "rapace-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio",
+]
+
+[[package]]
+name = "rapace-transport-mem"
+version = "0.4.0"
 source = "git+https://github.com/bearcove/rapace.git#3a12ec6b91fbac2f3e9643a312a3b2eb000b6c0c"
 dependencies = [
- "rapace-core",
+ "rapace-core 0.4.0 (git+https://github.com/bearcove/rapace.git)",
  "static_assertions",
  "tokio",
+]
+
+[[package]]
+name = "rapace-transport-shm"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14f86940bc8a547f29624353cc821275fbb4c5b84bb2861506ae3277cf655b38"
+dependencies = [
+ "allocator-api2",
+ "libc",
+ "parking_lot",
+ "rapace-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -771,7 +856,7 @@ source = "git+https://github.com/bearcove/rapace.git#3a12ec6b91fbac2f3e9643a312a
 dependencies = [
  "allocator-api2",
  "libc",
- "rapace-core",
+ "rapace-core 0.4.0 (git+https://github.com/bearcove/rapace.git)",
  "static_assertions",
  "tokio",
  "tracing",
@@ -780,9 +865,20 @@ dependencies = [
 [[package]]
 name = "rapace-transport-stream"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52f94b5def793185074fb41c5555f4a8625675bb8b6cd874dd515bccff585fa"
+dependencies = [
+ "parking_lot",
+ "rapace-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio",
+]
+
+[[package]]
+name = "rapace-transport-stream"
+version = "0.4.0"
 source = "git+https://github.com/bearcove/rapace.git#3a12ec6b91fbac2f3e9643a312a3b2eb000b6c0c"
 dependencies = [
- "rapace-core",
+ "rapace-core 0.4.0 (git+https://github.com/bearcove/rapace.git)",
  "static_assertions",
  "tokio",
 ]

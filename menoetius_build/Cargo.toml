@@ -6,7 +6,8 @@ license = "MIT"
 description = "a very experimental proc macro plugin system"
 
 [dependencies]
-menoetius = { path = "../menoetius" }
-rapace = { git = "https://github.com/bearcove/rapace.git", features = ["stream"] }
+menoetius = { version = "0.1.0", path = "../menoetius" }
+#rapace = { git = "https://github.com/bearcove/rapace.git", features = ["stream"] }
+rapace = { version = "0.4", features = ["stream"] }
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }

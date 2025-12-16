@@ -8,9 +8,10 @@ description = "a very experimental proc macro plugin system"
 [lib]
 
 [dependencies]
-rapace = { git = "https://github.com/bearcove/rapace.git", features = ["stream"] }
+#rapace = { git = "https://github.com/bearcove/rapace.git", features = ["stream"] }
+rapace = { version = "0.4", features = ["stream"] }
 tokio = { version = "1", features = ["process"] }
 tempfile = "3"
-menoetius = { path = "../menoetius" }
+menoetius = { version = "0.1.0", path = "../menoetius" }
 miette = "7.6.0"
 thiserror = "2.0.17"
