@@ -3,7 +3,7 @@ name = "my_plugin_hello_macro"
 version = "0.1.0"
 edition = "2024"
 description = "Proc-macro crate that expands to plugin invocation using the menoetius helper library"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 
 [lib]
 proc-macro = true
