@@ -3,6 +3,7 @@ name = "menoetius"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "a very experimental proc macro plugin system"
 
 [dependencies]
 inventory = "0.3"
